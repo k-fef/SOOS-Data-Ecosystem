@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<meta charset'"utf-8" />
+<!-- load d3 package-->
+<script src="https://d3js.org/d3.v4.js"></script>
+<!-- load color pallete for nodes-->
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<!-- load math library for sqrt of variable (used in scaling edges)-->
+<script src=https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.3.0/math.min.js></script>
+<!-- Create a div where the graph will take place -->
+<div id="soosnetwork"></div>
+
+<script>
+  // tutorials referenced 
+  // https://d3-graph-gallery.com/graph/custom_color.html node colors
+  // https://www.youtube.com/watch?v=1vHjMxe-4kI text/node coupling
+  // https://jsfiddle.net/owen_rodda/55zk55ut/16/ arrow heads
+
+// set the dimensions and margins of the graph
+  var margin = {top: 10, right: 30, bottom: 30, left: 40},
+      width = 700 - margin.left - margin.right,
+      height = 1000 - margin.top - margin.bottom;
+
+    
+// append the svg object to the body of the page
+var svg = d3.select("#soosnetwork")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom);
+    
+// create the arrowheads
+ var arrowMarker =  svg.append("defs").append("marker")
+    .attr("id", "arrow")
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 20)
+    .attr("refY", 0)
+    .attr("markerWidth", 8)
+    .attr("markerHeight", 8)
+    .attr("orient", "auto")
+    .attr("fill", "gray")
+    .append("svg:path")
+    .attr("d", "M0,-5L10,0L0,5");
+
+
+// SOOS network nodes and links in JSON format. 
+  var graphData = {
+    "nodes": [
+      {
+        "name": "SOOSmap",
+        "type": "Network",
+        "count": 2
+      },
+      {
+        "name": "ACE",
+        "type": "Research Initiative",
+        "count": 1
+      },
+      {
+        "name": "CMEMS",
+        "type": "Data Centre",
+        "count": 5
+      },
+      {
+        "name": "PANGAEA",
+        "type": "Data Centre",
+        "count": 2
+      },
+      {
+        "name": "GOSUD",
+        "type": "Consortium",
+        "count": 2
+      },
+      {
+        "name": "GLODAP",
+        "type": "Consortium",
+        "count": 2
+      },
+      {
+        "name": "SOCAT",
+        "type": "Consortium",
+        "count": 1
+      },
+      {
+        "name": "AADC",
+        "type": "Data Centre",
+        "count": 2
+      },
+      {
+        "name": "BAS",
+        "type": "Data Centre",
+        "count": 3
+      },
+      {
+        "name": "ASPeCt",
+        "type": "Working Group",
+        "count": 1
+      },
+      {
+        "name": "NOAA",
+        "type": "Government Agency",
+        "count": 3
+      },
+      {
+        "name": "SCAR",
+        "type": "Consortium",
+        "count": 3
+      },
+      {
+        "name": "EMODnet",
+        "type": "Network",
+        "count": 12
+      },
+      {
+        "name": "MEOP",
+        "type": "Consortium",
+        "count": 2
+      },
+      {
+        "name": "MAPPPD",
+        "type": "Network",
+        "count": 1
+      },
+      {
+        "name": "ACAP",
+        "type": "Network",
+        "count": 1
+      },
+      {
+        "name": "EMBL-EBI",
+        "type": "Research Initiative",
+        "count": 1
+      },
+      {
+        "name": "ARGO",
+        "type": "Network",
+        "count": 4
+      },
+      {
+        "name": "EUMETSAT OSI-SAF",
+        "type": "Data Centre",
+        "count": 2
+      },
+      {
+        "name": "Norwegian Polar Data Centre",
+        "type": "Data Centre",
+        "count": 1
+      },
+      {
+        "name": "AODN",
+        "type": "Data Centre",
+        "count": 1
+      },
+      {
+        "name": "Unclear",
+        "type": "Default",
+        "count": 6
+      },
+      {
+        "name": "NECKLACE",
+        "type": "Network",
+        "count": 1
+      },
+      {
+        "name": "SCOR",
+        "type": "Consortium",
+        "count": 1
+      },
+      {
+        "name": "MZGdb",
+        "type": "Research Initiative",
+        "count": 1
+      },
+      {
+        "name": "AAD",
+        "type": "Government Agency",
+        "count": 1
+      },
+      {
+        "name": "SO-CHIC",
+        "type": "Working Group",
+        "count": 1
+      }
+    ],
+    "links": [
+
+      {
+        "source": "ACE",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "CTD Profiles collection v. 2021"
+      },
+      {
+        "source": "CMEMS",
+        "target": "SOOSmap",
+        "count": 5,
+        "dataset": "CTD Profiles collection v. 2021, GLORYS12V1 - SFT, GLORYS12V1 - SST, GLORYS12V1 - SIT, GLORYS12V1 - SIC"
+      },
+      {
+        "source": "PANGAEA",
+        "target": "SOOSmap",
+        "count": 2,
+        "dataset": "CTD Profiles collection v. 2021, POLARSTERN Cruises"
+      },
+      {
+        "source": "GOSUD",
+        "target": "SOOSmap",
+        "count": 2,
+        "dataset": "GOSUD - SST - NRT [12 months], GOSUD - SSS - NRT [12 months]"
+      },
+      {
+        "source": "GLODAP",
+        "target": "SOOSmap",
+        "count": 2,
+        "dataset": "GLODAP - SST - Climatology, GLODAP - SSS - Climatology"
+      },
+      {
+        "source": "SOCAT",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "SOCAT v.2021 - fCO2"
+      },
+      {
+        "source": "AADC",
+        "target": "SOOSmap",
+        "count": 2,
+        "dataset": "CPR Tows Route, SCAR Retrospective Analysis of Antarctic Tracking Data"
+      },
+      {
+        "source": "SCAR",
+        "target": "AADC",
+        "count": 1,
+        "dataset": "CPR Tows Route"
+      },
+      {
+        "source": "BAS",
+        "target": "SOOSmap",
+        "count": 3,
+        "dataset": "KRILLBASE, Epipelagic mesozooplankton distribution and abundance 1996-2013, British Antartica Survey Webcams"
+      },
+      {
+        "source": "SO-CHIC",
+        "target": "EMODnet",
+        "count": 1,
+        "dataset": "Absolute Sea Level Trend - SSHT"
+      },
+      {
+        "source": "BAS",
+        "target": "SO-CHIC",
+        "count": 1,
+        "dataset": "Absolute Sea Level Trend - SSHT"
+      },
+      {
+        "source": "ASPeCt",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "ASPeCt - Sea Ice Measurements Database"
+      },
+      {
+        "source": "SCAR",
+        "target": "ASPeCt",
+        "count": 1,
+        "dataset": "ASPeCt - Sea Ice Measurements Database"
+      },
+      {
+        "source": "NOAA",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "Compilation of dissolved organic matter from 1994 to 2021. V2, MetaZooGene - ZOOC, NOAA Optimum Interpolation (OI) SST V2 - 1981-present"
+      },
+      {
+        "source": "SCOR",
+        "target": "MZGdb",
+        "count": 1,
+        "dataset": "MetaZooGene - ZOOC"
+      },
+      {
+        "source": "MZGdb",
+        "target": "NOAA",
+        "count": 1,
+        "dataset": "MetaZooGene - ZOOC"
+      },
+      {
+        "source": "SCAR",
+        "target": "SOOSmap",
+        "count": 2,
+        "dataset": "Plastic Debris, Bathymetric Survey Effort"
+      },
+      {
+        "source": "EMODnet",
+        "target": "SOOSmap",
+        "count": 13,
+        "dataset": "Gliders, Glider, ROV, AUV, ASV, UAV - NRT - SCT - last 60 days, Glider, ROV, AUV, ASV, UAV - NRT - SCS last 60 days, Drifting Buoys, Drifting buoys – SST – NRT 12 months, Temperature in situ SST - SCT, Sea Level Stations - SSH, Wave in situ platforms data, Wind in situ platforms data - WIND, IN SITU PLATFORMS, CORA Climatology - SCT, CORA Climatology - SCS, Absolute Sea Level Trend - SSHT, Wind"
+      },
+      {
+        "source": "MEOP",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "Animal-borne STC, Animal-borne - SCS"
+      },
+      {
+        "source": "MAPPPD",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "Penguin Colonies"
+      },
+      {
+        "source": "SOOSmap",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "SOOS Mooring Network"
+      },
+      {
+        "source": "ACAP",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "Albatrosses and Petrels Nesting Sites - ACAP"
+      },
+      {
+        "source": "EMBL-EBI",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "ENA SEQUENCES"
+      },
+      {
+        "source": "ARGO",
+        "target": "SOOSmap",
+        "count": 3,
+        "dataset": "ARGO and profiling floats, ARGO and profiling floats - SCT - NRT 12 months, ARGO and profiling floats – SCS – NRT 12 months"
+      },
+      {
+        "source": "EUMETSAT OSI-SAF",
+        "target": "SOOSmap",
+        "count": 2,
+        "dataset": "EUMETSAT OSISAF - SIC, EUMETSAT OSISAF - SITYPE"
+      },
+      {
+        "source": "Norwegian Polar Data Centre",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "SCAR - ICBG"
+      },
+      {
+        "source": "SCAR",
+        "target": "Norwegian Polar Data Centre",
+        "count": 1,
+        "dataset": "SCAR - ICBG"
+      },
+      {
+        "source": "AODN",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "SURVOSTRAL Program"
+      },
+      {
+        "source": "Unclear",
+        "target": "SOOSmap",
+        "count": 6,
+        "dataset": "CTD Animal-borne, ICE-LAPSE: Analysis of Antarctic benthos, GLORYS12V1 - MLD, Sea Sickness [25m ship], Sea Sickness [50m ship], Sea Sickness [75m ship]"
+      },
+      {
+        "source": "NECKLACE",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "NECKLACE"
+      },
+      {
+        "source": "SOOSmap",
+        "target": "NECKLACE",
+        "count": 1,
+        "dataset": "NECKLACE"
+      },
+      {
+        "source": "AAD",
+        "target": "SOOSmap",
+        "count": 1,
+        "dataset": "Australian Antarctic Program Survey Webcams"
+      }
+
+    ]
+  };
+
+
+// this is where the force directed attributes are defined
+// and the dynamic 'ticking' of the visual occurs.
+// each tick is a moment of time, like frames of a movie.
+// you can change the value in line 28 to make the nodes 
+// closer (more positive) or further away (more negative). 
+var simulation = d3
+    .forceSimulation(graphData.nodes)
+    .force("charge", d3.forceManyBody().strength(-400).distanceMax([250]))
+    .force("collide", d3.forceCollide().radius(35))
+    .force("center", d3.forceCenter(width / 2, height / 2))
+    .force("link", d3.forceLink(graphData.links).id(d => d.name))
+    .on("tick", ticked);
+
+//  define drag functionality. You shouldn't need to 
+// change anything here. 
+var drag = d3
+    .drag()
+    .on("start", dragstarted)
+    .on("drag", dragged)
+    .on("end", dragended);
+
+// define the color scheme for the nodes
+var nodeColor = d3
+    .scaleOrdinal(d3.schemeCategory10)
+    .domain(graphData.nodes);
+
+// define the links. 
+var links = svg
+    .append("g")
+    .attr("class", "links")
+    .selectAll("line")
+    .data(graphData.links)
+    .enter()
+    .append("line")
+    .attr("stroke-width", 1)
+   // .attr("stroke-width", function(d) { return (math.sqrt(d.count)); }) // makes edges too thick
+    .attr("marker-end", "url(#arrow)")
+    .style("stroke", "gray")
+    ;
+    
+// this variable creates a 'g' container to package
+// the node circles and the text together. 
+// this bit is crucial to the labelling, so that the nodes
+// don't drag around without the labels and vice versa.  
+var textsAndNodes = svg
+    .append("g")
+    .selectAll("g")
+    .data(graphData.nodes)
+    .enter()
+    .append("g")
+    .call(drag);
+
+ //define the node circles. 
+var circles = textsAndNodes
+    .append("circle")
+    //radius scaled between 3 and 10 by scaling function in form ( value - r1[ 0 ] ) * ( r2[ 1 ] - r2[ 0 ] ) / ( r1[ 1 ] - r1[ 0 ] ) + r2[ 0 ];
+    .attr("r", function(d) { return ((d.count - 1)*7/(11)+5)}) 
+    .attr("fill", function(d){return nodeColor(d.type)})
+    .style("stroke", 'gray')
+    .style("stroke-width", 1.5);
+
+//define the text labels.
+var texts = textsAndNodes
+    .append("text")
+    .style("font-size", "")
+    .text(function(d) {
+        return d.name;
+})
+;
+
+
+    // tick function progresses the movement of the simulation. 
+    // coordinates are plotted and moved according to the 
+    // forces defined in simulation above. 
+function ticked() {
+    //translate (x,y)
+    textsAndNodes.attr("transform", function(d){
+        return "translate(" +d.x + ", " + d.y + ")"
+    });
+    
+    links
+        .attr("x1", function(d) {
+            return d.source.x;
+        })
+        .attr("y1", function(d) {
+            return d.source.y;
+        })
+        .attr("x2", function(d) {
+            return d.target.x;
+        })
+        .attr("y2", function(d) {
+            return d.target.y;
+        });
+    console.log(simulation.alpha());
+}
+
+// dragging functions to allow for interactive clicking,
+// you won't likely need to ever change anything here. 
+function dragstarted(d) {
+    simulation.alphaTarget(0.3).restart();
+    d.fx = d3.event.x;
+    d.fy = d3.event.y;
+}
+
+function dragged(d) {
+    d.fx = d3.event.x;
+    d.fy = d3.event.y;
+}
+
+function dragended(d) {
+    simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+}
+
+</script>
+
